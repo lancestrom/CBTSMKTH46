@@ -117,7 +117,7 @@ class WebView : AppCompatActivity() {
                 }
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
             }
-            wv.loadUrl("http://project.cbt.smkth-jakbar.com/cbt2.5/")
+            wv.loadUrl("http://project.cbt.smkth-jakbar.com/list_jurusan/")
         }
         swipeRefresh?.setOnRefreshListener { webView?.reload() }
     }
