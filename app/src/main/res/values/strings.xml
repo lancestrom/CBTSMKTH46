@@ -4,6 +4,6 @@
     <string name="token_instruction">Masukkan Token Masuk</string>
     <string name="token_hint">Token</string>
     <string name="btn_masuk">MASUK KE UJIAN</string>
-    <string name="copyright">© 2024 SMK Taruna Harapan 46</string>
+    <string name="copyright">© 2026 SMK Taruna Harapan 46</string>
     <string name="empty_token_error">Silakan masukkan token terlebih dahulu</string>
 </resources>
