@@ -7,12 +7,13 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.Toast
+import java.net.HttpURLConnection
+import java.net.URL
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -71,9 +72,7 @@ class TokenMasuk : AppCompatActivity() {
         btnMasuk.setOnClickListener {
             val token = etToken.text.toString().trim()
             if (token.isNotEmpty()) {
-                val intent = Intent(this, WebView::class.java)
-                startActivity(intent)
-                finish()
+                checkToken(token)
             } else {
                 Toast.makeText(this, getString(R.string.empty_token_error), Toast.LENGTH_SHORT).show()
             }
@@ -104,23 +103,10 @@ class TokenMasuk : AppCompatActivity() {
         isRequestingPermission = false
         hideSystemUI()
 
-        // Check Mandatory Permissions
+        // Cek hanya izin Overlay (Appear on Top)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 forceOpenOverlaySettings()
-                return
-            }
-
-            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                try {
-                    isRequestingPermission = true
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    isRequestingPermission = false
-                    e.printStackTrace()
-                }
                 return
             }
         }
@@ -142,16 +128,50 @@ class TokenMasuk : AppCompatActivity() {
         }
     }
 
+    private fun checkToken(inputToken: String) {
+        val btnMasuk = findViewById<Button>(R.id.btnMasuk)
+        btnMasuk.isEnabled = false
+        btnMasuk.text = "Mengecek..."
+
+        Thread {
+            try {
+                val url = URL("http://103.103.20.187/token/api/check_token")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                val response = connection.inputStream.bufferedReader().use { it.readText() }.trim()
+
+                runOnUiThread {
+                    btnMasuk.isEnabled = true
+                    btnMasuk.text = getString(R.string.btn_masuk)
+
+                    // Memeriksa apakah input sama dengan response dari API
+                    if (response.equals(inputToken, ignoreCase = true) || response.contains(inputToken, ignoreCase = true)) {
+                        val intent = Intent(this, WebView::class.java)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        Toast.makeText(this, "Token Salah! Silakan coba lagi.", Toast.LENGTH_LONG).show()
+                        findViewById<TextInputEditText>(R.id.etToken).text?.clear()
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    btnMasuk.isEnabled = true
+                    btnMasuk.text = getString(R.string.btn_masuk)
+                    Toast.makeText(this, "Koneksi Gagal: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
     private fun bringToFront() {
         if (isRequestingPermission) return
         try {
             val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
             activityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION)
-
-            val intent = Intent(this, TokenMasuk::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-            startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }

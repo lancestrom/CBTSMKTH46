@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.WindowManager
@@ -126,24 +125,11 @@ class WebView : AppCompatActivity() {
         super.onResume()
         isRequestingPermission = false
         hideSystemUI()
-        
+
         // Check Mandatory Permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 forceOpenOverlaySettings()
-                return
-            }
-            
-            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                try {
-                    isRequestingPermission = true
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    isRequestingPermission = false
-                    e.printStackTrace()
-                }
                 return
             }
         }
@@ -170,11 +156,6 @@ class WebView : AppCompatActivity() {
         try {
             val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
             activityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION)
-            
-            val intent = Intent(this, WebView::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-            startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }
