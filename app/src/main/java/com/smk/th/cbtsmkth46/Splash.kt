@@ -21,7 +21,7 @@ class Splash : AppCompatActivity() {
 
         // Tunggu 5 detik lalu pindah ke WebView
         Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, WebView::class.java)
+            val intent = Intent(this, TokenMasuk::class.java)
             startActivity(intent)
             finish()
         }, 5000)
