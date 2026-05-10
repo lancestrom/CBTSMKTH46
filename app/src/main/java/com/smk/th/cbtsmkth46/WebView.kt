@@ -11,6 +11,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.WindowManager
+import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -67,6 +68,12 @@ class WebView : AppCompatActivity() {
         swipeRefresh = findViewById(R.id.swipeRefresh)
         btnNext = findViewById(R.id.btnNext)
 
+        btnNext?.setOnClickListener {
+            val intent = Intent(this@WebView, TokenKeluar::class.java)
+            startActivity(intent)
+            finish()
+        }
+
         setupWebView()
 
         // 2. Disable Back
@@ -91,6 +98,13 @@ class WebView : AppCompatActivity() {
 
     private fun setupWebView() {
         webView?.let { wv ->
+            // Clear all cache, history, and cookies for fresh start
+            wv.clearCache(true)
+            wv.clearHistory()
+            wv.clearFormData()
+            CookieManager.getInstance().removeAllCookies(null)
+            CookieManager.getInstance().flush()
+
             wv.settings.apply {
                 @Suppress("SetJavaScriptEnabled")
                 javaScriptEnabled = true
@@ -99,8 +113,8 @@ class WebView : AppCompatActivity() {
                 allowContentAccess = true
                 useWideViewPort = true
                 loadWithOverviewMode = true
-                // Optimasi Cache: Pakai Cache jika tersedia, jika tidak ambil dari network
-                cacheMode = WebSettings.LOAD_DEFAULT 
+                // Selalu ambil yang terbaru dari server
+                cacheMode = WebSettings.LOAD_NO_CACHE 
                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 databaseEnabled = true
             }
@@ -117,20 +131,18 @@ class WebView : AppCompatActivity() {
                     hideSystemUI()
                 }
                 
-                // Menangani jika terjadi error (otomatis refresh atau beri tahu user)
                 override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
                     Toast.makeText(this@WebView, "Gagal memuat halaman, mencoba lagi...", Toast.LENGTH_SHORT).show()
-                    // Opsional: otomatis reload jika gagal
-                    // view?.reload() 
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
             }
-            // Tambahkan clear cache saat pertama kali dibuka jika ingin selalu fresh
-            wv.clearCache(true)
             wv.loadUrl("http://project.cbt.smkth-jakbar.com/list_jurusan/")
         }
-        swipeRefresh?.setOnRefreshListener { webView?.reload() }
+        swipeRefresh?.setOnRefreshListener { 
+            webView?.clearCache(true)
+            webView?.reload() 
+        }
     }
 
     override fun onResume() {
