@@ -99,8 +99,10 @@ class WebView : AppCompatActivity() {
                 allowContentAccess = true
                 useWideViewPort = true
                 loadWithOverviewMode = true
-                cacheMode = WebSettings.LOAD_DEFAULT
+                // Optimasi Cache: Pakai Cache jika tersedia, jika tidak ambil dari network
+                cacheMode = WebSettings.LOAD_DEFAULT 
                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                databaseEnabled = true
             }
 
             wv.setOnLongClickListener { true }
@@ -114,8 +116,18 @@ class WebView : AppCompatActivity() {
                     swipeRefresh?.isRefreshing = false
                     hideSystemUI()
                 }
+                
+                // Menangani jika terjadi error (otomatis refresh atau beri tahu user)
+                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                    Toast.makeText(this@WebView, "Gagal memuat halaman, mencoba lagi...", Toast.LENGTH_SHORT).show()
+                    // Opsional: otomatis reload jika gagal
+                    // view?.reload() 
+                }
+
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
             }
+            // Tambahkan clear cache saat pertama kali dibuka jika ingin selalu fresh
+            wv.clearCache(true)
             wv.loadUrl("http://project.cbt.smkth-jakbar.com/list_jurusan/")
         }
         swipeRefresh?.setOnRefreshListener { webView?.reload() }
