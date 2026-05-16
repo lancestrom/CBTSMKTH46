@@ -145,6 +145,14 @@ class TokenMasuk : AppCompatActivity() {
                 return
             }
         }
+
+        // Start Lock Task (Screen Pinning) to block Home and Recents
+        try {
+            startLockTask()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         bringToFront()
     }
 
@@ -212,12 +220,21 @@ class TokenMasuk : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        return when (event.keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN,
-            KeyEvent.KEYCODE_HOME, KeyEvent.KEYCODE_APP_SWITCH,
-            KeyEvent.KEYCODE_MENU -> true
-            else -> super.dispatchKeyEvent(event)
+        val keyCode = event.keyCode
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || 
+            keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || 
+            keyCode == KeyEvent.KEYCODE_HOME || 
+            keyCode == KeyEvent.KEYCODE_APP_SWITCH) {
+            return true
         }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onDestroy() {
